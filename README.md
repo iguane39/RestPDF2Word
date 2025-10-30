@@ -4,12 +4,20 @@ Un outil Python simple et puissant pour convertir des fichiers PDF en documents 
 
 ## ✨ Caractéristiques
 
+### Conversion PDF → Word
 - ✅ **Conversion fidèle à 99%** : Préserve les polices, le formatage (gras, italique), les couleurs et la mise en page
 - ✅ **Documents éditables** : Produit de vrais fichiers Word avec du texte sélectionnable et modifiable (pas d'images)
 - ✅ **Simple d'utilisation** : Interface en ligne de commande intuitive
 - ✅ **Conversion par lot** : Convertit plusieurs PDFs en une seule commande
 - ✅ **Gestion des erreurs** : Suivi détaillé et gestion robuste des erreurs
 - ✅ **Support récursif** : Traite les sous-dossiers automatiquement
+
+### Édition de documents Word
+- ✅ **Ajustement automatique des marges** : Modifie les marges pendant ou après la conversion
+- ✅ **Pipeline complet** : Convertit PDF → Word avec ajustement automatique des marges
+- ✅ **Script standalone** : Éditeur de marges indépendant pour documents Word existants
+- ✅ **Modification par lot** : Ajuste les marges de plusieurs documents en une seule commande
+- ✅ **Unités flexibles** : Support de cm, inches et points
 
 ## 📋 Prérequis
 
@@ -107,10 +115,46 @@ python pdf_to_word.py -d ./mes_pdfs -od ./mes_words
 python pdf_to_word.py -d ./mes_pdfs -od ./mes_words --recursive
 ```
 
+### Conversion avec ajustement automatique des marges (Pipeline complet)
+
+```bash
+# Convertir et ajuster toutes les marges à 2.5 cm
+python pdf_to_word.py input.pdf --margins 2.5
+
+# Convertir avec des marges spécifiques
+python pdf_to_word.py input.pdf --margin-top 3 --margin-bottom 3 --margin-left 2.5 --margin-right 2.5
+
+# Utiliser des inches au lieu de cm
+python pdf_to_word.py input.pdf --margins 1 --margin-unit inches
+
+# Conversion multiple avec ajustement des marges
+python pdf_to_word.py -d ./mes_pdfs -od ./mes_words --margins 2.5
+```
+
+### Édition des marges de documents Word existants
+
+```bash
+# Modifier toutes les marges à 2.5 cm
+python edit_word_margins.py document.docx --all 2.5
+
+# Modifier des marges spécifiques
+python edit_word_margins.py document.docx --top 3 --bottom 3 --left 2.5 --right 2.5
+
+# Avec un fichier de sortie différent
+python edit_word_margins.py input.docx -o output.docx --all 2.5
+
+# Modifier plusieurs fichiers dans un dossier
+python edit_word_margins.py -d ./documents --all 2.5
+
+# Afficher les marges actuelles d'un document
+python edit_word_margins.py document.docx --info
+```
+
 ### Utilisation en tant que module Python
 
 ```python
 from pdf_to_word import PDFToWordConverter
+from word_editor import WordEditor
 
 # Initialiser le convertisseur
 converter = PDFToWordConverter(api_key="votre_clé_api")
@@ -126,14 +170,36 @@ if result['success']:
 else:
     print(f"❌ Erreur: {result['message']}")
 
-# Convertir plusieurs fichiers
+# Convertir avec ajustement automatique des marges (Pipeline complet)
+result = converter.convert_pdf_to_word(
+    pdf_path="input.pdf",
+    output_path="output.docx",
+    adjust_margins=True,
+    margin_top=2.5,
+    margin_bottom=2.5,
+    margin_left=2.5,
+    margin_right=2.5,
+    margin_unit='cm'
+)
+
+# Convertir plusieurs fichiers avec ajustement des marges
 results = converter.convert_multiple_pdfs(
     pdf_directory="./pdfs",
     output_directory="./words",
-    recursive=True
+    recursive=True,
+    adjust_margins=True,
+    margin_top=2.5,
+    margin_bottom=2.5,
+    margin_left=2.5,
+    margin_right=2.5
 )
 
 print(f"Conversions réussies: {results['message']}")
+
+# Éditer les marges d'un document Word existant
+editor = WordEditor("document.docx")
+editor.set_margins(top=2.5, bottom=2.5, left=2.5, right=2.5, unit='cm')
+editor.save()
 ```
 
 ## 🎯 Exemples
@@ -174,9 +240,14 @@ $ python pdf_to_word.py -d ./documents -od ./documents_word
 
 ## 🔧 Options complètes
 
+### pdf_to_word.py - Convertisseur PDF vers Word
+
 ```
 usage: pdf_to_word.py [-h] [-o OUTPUT] [-d DIRECTORY] [-od OUTPUT_DIRECTORY]
                       [-r] [--api-key API_KEY] [--timeout TIMEOUT]
+                      [--margins SIZE] [--margin-top MARGIN_TOP]
+                      [--margin-bottom MARGIN_BOTTOM] [--margin-left MARGIN_LEFT]
+                      [--margin-right MARGIN_RIGHT] [--margin-unit {cm,inches,pt}]
                       [input]
 
 positional arguments:
@@ -193,6 +264,43 @@ optional arguments:
   -r, --recursive       Chercher récursivement dans les sous-dossiers
   --api-key API_KEY     Clé API pdfRest
   --timeout TIMEOUT     Timeout en secondes (défaut: 300)
+  --margins SIZE        Définir toutes les marges à la même valeur
+  --margin-top          Marge supérieure
+  --margin-bottom       Marge inférieure
+  --margin-left         Marge gauche
+  --margin-right        Marge droite
+  --margin-unit         Unité des marges: cm, inches ou pt (défaut: cm)
+```
+
+### edit_word_margins.py - Éditeur de marges Word
+
+```
+usage: edit_word_margins.py [-h] [-o OUTPUT] [-d DIRECTORY] [-od OUTPUT_DIRECTORY]
+                            [--all MARGIN] [--top TOP] [--bottom BOTTOM]
+                            [--left LEFT] [--right RIGHT] [--unit {cm,inches,pt}]
+                            [--first-section-only] [--info] [-r]
+                            [input]
+
+positional arguments:
+  input                 Fichier Word à modifier
+
+optional arguments:
+  -h, --help            Afficher ce message d'aide
+  -o OUTPUT, --output OUTPUT
+                        Fichier de sortie
+  -d DIRECTORY, --directory DIRECTORY
+                        Modifier tous les fichiers Word d'un dossier
+  -od OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
+                        Dossier de sortie
+  --all MARGIN          Définir toutes les marges à la même valeur
+  --top TOP             Marge supérieure
+  --bottom BOTTOM       Marge inférieure
+  --left LEFT           Marge gauche
+  --right RIGHT         Marge droite
+  --unit {cm,inches,pt} Unité de mesure (défaut: cm)
+  --first-section-only  Appliquer seulement à la première section
+  --info                Afficher les informations sur le document
+  -r, --recursive       Traiter récursivement les sous-dossiers
 ```
 
 ## 📊 Qualité de conversion

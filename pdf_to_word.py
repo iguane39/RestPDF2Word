@@ -14,6 +14,13 @@ import requests
 from pathlib import Path
 from typing import Optional, Dict, Any
 
+# Import du module d'édition Word pour l'ajustement des marges
+try:
+    from word_editor import WordEditor
+    WORD_EDITOR_AVAILABLE = True
+except ImportError:
+    WORD_EDITOR_AVAILABLE = False
+
 
 class PDFToWordConverter:
     """Convertisseur PDF vers Word utilisant l'API pdfRest"""
@@ -41,15 +48,27 @@ class PDFToWordConverter:
         self,
         pdf_path: str,
         output_path: Optional[str] = None,
-        timeout: int = 300
+        timeout: int = 300,
+        adjust_margins: bool = False,
+        margin_top: Optional[float] = None,
+        margin_bottom: Optional[float] = None,
+        margin_left: Optional[float] = None,
+        margin_right: Optional[float] = None,
+        margin_unit: str = 'cm'
     ) -> Dict[str, Any]:
         """
-        Convertit un fichier PDF en document Word éditable
+        Convertit un fichier PDF en document Word éditable avec ajustement optionnel des marges
 
         Args:
             pdf_path: Chemin vers le fichier PDF source
             output_path: Chemin de sortie pour le fichier DOCX (optionnel)
             timeout: Temps maximum d'attente en secondes (défaut: 300s)
+            adjust_margins: Activer l'ajustement automatique des marges après conversion
+            margin_top: Marge supérieure (si adjust_margins=True)
+            margin_bottom: Marge inférieure (si adjust_margins=True)
+            margin_left: Marge gauche (si adjust_margins=True)
+            margin_right: Marge droite (si adjust_margins=True)
+            margin_unit: Unité des marges ('cm', 'inches', 'pt') - défaut: 'cm'
 
         Returns:
             Dict contenant les informations sur la conversion:
@@ -57,6 +76,7 @@ class PDFToWordConverter:
             - output_file: str (chemin du fichier DOCX créé)
             - message: str
             - details: Dict (détails de la réponse API)
+            - margins_adjusted: bool (si les marges ont été modifiées)
 
         Raises:
             FileNotFoundError: Si le fichier PDF n'existe pas
@@ -118,11 +138,24 @@ class PDFToWordConverter:
                     download_url = result['outputUrl']
                     self._download_file(download_url, output_path)
 
+                    # Ajuster les marges si demandé
+                    margins_adjusted = False
+                    if adjust_margins:
+                        margins_adjusted = self._adjust_word_margins(
+                            output_path,
+                            margin_top,
+                            margin_bottom,
+                            margin_left,
+                            margin_right,
+                            margin_unit
+                        )
+
                     return {
                         'success': True,
                         'output_file': str(output_path),
                         'message': 'Conversion réussie',
-                        'details': result
+                        'details': result,
+                        'margins_adjusted': margins_adjusted
                     }
                 else:
                     return {
@@ -140,6 +173,18 @@ class PDFToWordConverter:
                 print(f"✅ Conversion réussie!")
                 print(f"💾 Fichier sauvegardé: {output_path}")
 
+                # Ajuster les marges si demandé
+                margins_adjusted = False
+                if adjust_margins:
+                    margins_adjusted = self._adjust_word_margins(
+                        output_path,
+                        margin_top,
+                        margin_bottom,
+                        margin_left,
+                        margin_right,
+                        margin_unit
+                    )
+
                 return {
                     'success': True,
                     'output_file': str(output_path),
@@ -147,7 +192,8 @@ class PDFToWordConverter:
                     'details': {
                         'file_size': len(response.content),
                         'content_type': content_type
-                    }
+                    },
+                    'margins_adjusted': margins_adjusted
                 }
 
             else:
@@ -227,19 +273,94 @@ class PDFToWordConverter:
 
         print(f"💾 Fichier sauvegardé: {output_path}")
 
+    def _adjust_word_margins(
+        self,
+        docx_path: Path,
+        top: Optional[float],
+        bottom: Optional[float],
+        left: Optional[float],
+        right: Optional[float],
+        unit: str
+    ) -> bool:
+        """
+        Ajuste les marges d'un document Word
+
+        Args:
+            docx_path: Chemin du fichier DOCX
+            top: Marge supérieure
+            bottom: Marge inférieure
+            left: Marge gauche
+            right: Marge droite
+            unit: Unité des marges
+
+        Returns:
+            True si les marges ont été ajustées, False sinon
+        """
+        if not WORD_EDITOR_AVAILABLE:
+            print("⚠️ Module word_editor non disponible, marges non modifiées")
+            return False
+
+        if not any([top, bottom, left, right]):
+            print("⚠️ Aucune marge spécifiée, marges non modifiées")
+            return False
+
+        try:
+            print(f"📐 Ajustement des marges...")
+            editor = WordEditor(str(docx_path))
+
+            result = editor.set_margins(
+                top=top,
+                bottom=bottom,
+                left=left,
+                right=right,
+                unit=unit,
+                all_sections=True
+            )
+
+            if result['success']:
+                save_result = editor.save()
+                if save_result['success']:
+                    print(f"✅ Marges ajustées:")
+                    for side, value in result['margins'].items():
+                        if value != 'inchangée':
+                            print(f"   - {side.capitalize()}: {value}")
+                    return True
+                else:
+                    print(f"⚠️ Erreur lors de la sauvegarde des marges: {save_result['message']}")
+                    return False
+            else:
+                print(f"⚠️ Erreur lors de l'ajustement des marges: {result['message']}")
+                return False
+
+        except Exception as e:
+            print(f"⚠️ Erreur lors de l'ajustement des marges: {str(e)}")
+            return False
+
     def convert_multiple_pdfs(
         self,
         pdf_directory: str,
         output_directory: Optional[str] = None,
-        recursive: bool = False
+        recursive: bool = False,
+        adjust_margins: bool = False,
+        margin_top: Optional[float] = None,
+        margin_bottom: Optional[float] = None,
+        margin_left: Optional[float] = None,
+        margin_right: Optional[float] = None,
+        margin_unit: str = 'cm'
     ) -> Dict[str, Any]:
         """
-        Convertit plusieurs fichiers PDF en Word
+        Convertit plusieurs fichiers PDF en Word avec ajustement optionnel des marges
 
         Args:
             pdf_directory: Dossier contenant les PDFs
             output_directory: Dossier de sortie (optionnel)
             recursive: Chercher récursivement dans les sous-dossiers
+            adjust_margins: Activer l'ajustement automatique des marges après conversion
+            margin_top: Marge supérieure (si adjust_margins=True)
+            margin_bottom: Marge inférieure (si adjust_margins=True)
+            margin_left: Marge gauche (si adjust_margins=True)
+            margin_right: Marge droite (si adjust_margins=True)
+            margin_unit: Unité des marges ('cm', 'inches', 'pt') - défaut: 'cm'
 
         Returns:
             Dict avec les résultats de toutes les conversions
@@ -280,8 +401,17 @@ class PDFToWordConverter:
             output_path = output_dir / relative_path.with_suffix('.docx')
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Convertir
-            result = self.convert_pdf_to_word(str(pdf_file), str(output_path))
+            # Convertir avec ajustement des marges si demandé
+            result = self.convert_pdf_to_word(
+                str(pdf_file),
+                str(output_path),
+                adjust_margins=adjust_margins,
+                margin_top=margin_top,
+                margin_bottom=margin_bottom,
+                margin_left=margin_left,
+                margin_right=margin_right,
+                margin_unit=margin_unit
+            )
             results.append({
                 'input_file': str(pdf_file),
                 **result
@@ -321,6 +451,12 @@ Exemples d'utilisation:
 
   # Convertir tous les PDFs d'un dossier
   python pdf_to_word.py -d ./pdfs -od ./words
+
+  # Convertir avec ajustement automatique des marges à 2.5 cm
+  python pdf_to_word.py input.pdf --margins 2.5
+
+  # Convertir avec des marges spécifiques
+  python pdf_to_word.py input.pdf --margin-top 3 --margin-bottom 3 --margin-left 2.5 --margin-right 2.5
 
   # Utiliser une clé API spécifique
   python pdf_to_word.py input.pdf --api-key YOUR_API_KEY
@@ -366,6 +502,45 @@ Exemples d'utilisation:
         help='Timeout en secondes (défaut: 300)'
     )
 
+    # Arguments pour l'ajustement des marges (Option B)
+    parser.add_argument(
+        '--margins',
+        type=float,
+        metavar='SIZE',
+        help='Définir toutes les marges à la même valeur (active automatiquement l\'ajustement)'
+    )
+
+    parser.add_argument(
+        '--margin-top',
+        type=float,
+        help='Marge supérieure'
+    )
+
+    parser.add_argument(
+        '--margin-bottom',
+        type=float,
+        help='Marge inférieure'
+    )
+
+    parser.add_argument(
+        '--margin-left',
+        type=float,
+        help='Marge gauche'
+    )
+
+    parser.add_argument(
+        '--margin-right',
+        type=float,
+        help='Marge droite'
+    )
+
+    parser.add_argument(
+        '--margin-unit',
+        choices=['cm', 'inches', 'pt'],
+        default='cm',
+        help='Unité des marges (défaut: cm)'
+    )
+
     args = parser.parse_args()
 
     # Obtenir la clé API
@@ -381,13 +556,34 @@ Exemples d'utilisation:
     # Créer le convertisseur
     converter = PDFToWordConverter(api_key)
 
+    # Préparer les paramètres de marges
+    adjust_margins = False
+    margin_top = args.margin_top
+    margin_bottom = args.margin_bottom
+    margin_left = args.margin_left
+    margin_right = args.margin_right
+
+    # Si --margins est spécifié, utiliser la même valeur pour tous les côtés
+    if args.margins is not None:
+        margin_top = margin_bottom = margin_left = margin_right = args.margins
+        adjust_margins = True
+    # Sinon, activer l'ajustement si au moins une marge est spécifiée
+    elif any([margin_top, margin_bottom, margin_left, margin_right]):
+        adjust_margins = True
+
     try:
         # Mode dossier
         if args.directory:
             result = converter.convert_multiple_pdfs(
                 args.directory,
                 args.output_directory,
-                args.recursive
+                args.recursive,
+                adjust_margins=adjust_margins,
+                margin_top=margin_top,
+                margin_bottom=margin_bottom,
+                margin_left=margin_left,
+                margin_right=margin_right,
+                margin_unit=args.margin_unit
             )
             sys.exit(0 if result['success'] else 1)
 
@@ -396,7 +592,13 @@ Exemples d'utilisation:
             result = converter.convert_pdf_to_word(
                 args.input,
                 args.output,
-                args.timeout
+                args.timeout,
+                adjust_margins=adjust_margins,
+                margin_top=margin_top,
+                margin_bottom=margin_bottom,
+                margin_left=margin_left,
+                margin_right=margin_right,
+                margin_unit=args.margin_unit
             )
             sys.exit(0 if result['success'] else 1)
 

@@ -3,5 +3,8 @@
 # Requêtes HTTP
 requests>=2.31.0
 
+# Manipulation de documents Word
+python-docx>=1.1.0
+
 # Optionnel: pour charger les variables d'environnement depuis .env
 python-dotenv>=1.0.0
