@@ -1,0 +1,17 @@
+{
+  "page_headers": [
+    "\\d+\\s+ANNA KARÉNINE",
+    "\\d+\\s+ANNA KARENINE",
+    "\\d+\\s+LÉON TOLSTOÏ",
+    "\\d+\\s+LEON TOLSTOI"
+  ],
+  "false_footnotes": "\\s+(\\d+)\\s*([\\.,;:])",
+  "paragraph_breaks": "\\.\\s+(?=[A-ZÀÉÈÊËÏÎÔÙŒÆ])",
+  "multiple_spaces": "\\s{2,}",
+  "space_before_punctuation": {
+    "colon": "(\\S)\\s*:",
+    "semicolon": "(\\S)\\s*;",
+    "exclamation": "(\\S)\\s*!",
+    "question": "(\\S)\\s*\\?"
+  }
+}

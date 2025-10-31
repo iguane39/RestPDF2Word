@@ -1,0 +1,45 @@
+{
+  "russian_authors": {
+    "DOSTOÏEVSKI": "Dostoïevski",
+    "DOSTOIEVSKI": "Dostoïevski",
+    "DOSTOEVSKI": "Dostoïevski",
+    "TCHEKHOV": "Tchékhov",
+    "TCHEKOV": "Tchékhov",
+    "TCHECHOV": "Tchékhov",
+    "TOURGUENIEV": "Tourguéniev",
+    "TOURGUENEFF": "Tourguéniev",
+    "TOLSTOÏ": "Tolstoï",
+    "TOLSTOI": "Tolstoï",
+    "TOLSTOY": "Tolstoï",
+    "POUCHKINE": "Pouchkine",
+    "PUSHKIN": "Pouchkine",
+    "GOGOL": "Gogol",
+    "GORKI": "Gorki",
+    "GORKY": "Gorki",
+    "SCHOPENHAUER": "Schopenhauer"
+  },
+  "russian_places": {
+    "MOSCOU": "Moscou",
+    "MOSCOW": "Moscou",
+    "SAINT-PÉTERSBOURG": "Saint-Pétersbourg",
+    "SAINT-PETERSBOURG": "Saint-Pétersbourg",
+    "PETERSBURG": "Saint-Pétersbourg",
+    "RUSSIE": "Russie",
+    "RUSSIA": "Russie"
+  },
+  "common_names": {
+    "LÉON": "Léon",
+    "LEON": "Léon",
+    "ANNA": "Anna",
+    "KARÉNINE": "Karénine",
+    "KARENINE": "Karénine",
+    "WRONSKY": "Wronsky",
+    "VRONSKY": "Vronsky",
+    "KITTY": "Kitty",
+    "LEVINE": "Lévine",
+    "LEVIN": "Lévine",
+    "OBLONSKY": "Oblonsky",
+    "STIVA": "Stiva"
+  },
+  "acronyms": ["URSS", "USA", "USSR", "ONU", "NATO", "OTAN"]
+}

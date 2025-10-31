@@ -1,0 +1,3 @@
+"""
+Configuration et dictionnaires
+"""
